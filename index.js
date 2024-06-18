@@ -8,13 +8,20 @@ const session = require('express-session');
 const bodyParser = require('body-parser');
 const app = express();
 const connectDB = require('./db');
+const http = require('http');
+const socketIo = require('socket.io');
 require('dotenv').config();
 const authRoutes = require('./routes/authRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const jobPostRoutes = require('./routes/jobPostRoutes');
 const jobApplyRoutes = require('./routes/jobApplyRoutes');
 const filterjobsRoutes = require('./routes/filterjobsRoutes');
-const h = require('./routes/h');
+const resetPassword = require('./routes/resetPassword');
+const notificationRoutes =  require('./routes/notificationRoutes');
+
+const server = http.createServer(app);
+const io = socketIo(server);
+
 
 connectDB();
 
@@ -46,8 +53,24 @@ app.use(profileRoutes);
 app.use(jobPostRoutes);
 app.use(jobApplyRoutes);
 app.use(filterjobsRoutes);
-//app.use(passwordresetRoutes);
-app.use(h);
+app.use(resetPassword);
+
+// Middleware to inject io instance into requests
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+app.use('/notifications', notificationRoutes);
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
+});
 
 app.get('/', (req, res) => {
   res.send('Hello World!');

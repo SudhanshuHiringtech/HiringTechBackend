@@ -40,4 +40,19 @@ const Getalljobs = async (req, res) => {
 
 router.get('/getalljobs', Getalljobs);
 
+
+// GET API to fetch jobs a candidate has applied to
+router.get('/appliedjobs/:candidateId', async (req, res) => {
+  try {
+    const candidateId = req.params.candidateId;
+
+    // Find jobs where the candidate has applied
+    const jobs = await JobPost.find({ applications: candidateId });
+
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
